@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Menus de Saison</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --parchment: #EDE5D0;
+    --ink: #2C2416;
+    --ink-light: #5C4E36;
+    --accent: #7A8C4F;
+    --accent-warm: #C8773A;
+    --accent-light: #A8B870;
+    --tag-bg: #E8EED8;
+    --card-bg: #FDFAF3;
+    --shadow: rgba(44,36,22,0.12);
+    --border: rgba(44,36,22,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    font-family: 'Lato', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--ink);
+    padding: 24px 20px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: var(--cream);
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .app-header h1 em {
+    color: var(--accent-light);
+    font-style: italic;
+  }
+  .month-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* SEASONAL PRODUCE STRIP */
+  .produce-strip {
+    background: var(--parchment);
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .produce-strip-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 8px;
+  }
+  .produce-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .produce-tag {
+    background: var(--tag-bg);
+    border: 1px solid rgba(120,140,79,0.3);
+    color: var(--ink);
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 400;
+  }
+  .produce-tag.fruit {
+    background: #FEF0E0;
+    border-color: rgba(200,119,58,0.3);
+  }
+
+  /* MAIN CONTENT */
+  .content {
+    padding: 0 16px 100px;
+  }
+
+  /* GENERATE BUTTON */
+  .generate-section {
+    padding: 20px 0 4px;
+  }
+  .btn-generate {
+    width: 100%;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-style: italic;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.15s, background 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-generate:hover { background: #3D3220; transform: translateY(-1px); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate .icon { font-size: 20px; }
+
+  /* PREFERENCES ROW */
+  .prefs-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .pref-btn {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--ink-light);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .pref-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* LOADING */
+  .loading-state {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .loading-state.visible { display: block; }
+  .loading-leaf {
+    font-size: 36px;
+    animation: sway 1.2s ease-in-out infinite alternate;
+    display: inline-block;
+  }
+  @keyframes sway {
+    from { transform: rotate(-8deg); }
+    to { transform: rotate(8deg); }
+  }
+  .loading-text {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--ink-light);
+    margin-top: 12px;
+    font-size: 15px;
+  }
+
+  /* ERROR */
+  .error-state {
+    display: none;
+    background: #FFF5F0;
+    border: 1px solid #F0C0A0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #8B4513;
+  }
+  .error-state.visible { display: block; }
+
+  /* WEEK MENU */
+  .week-container {
+    display: none;
+    margin-top: 20px;
+  }
+  .week-container.visible { display: block; }
+
+  .week-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .week-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .week-meta {
+    font-size: 11px;
+    color: var(--ink-light);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+
+  /* DAY CARD */
+  .day-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow);
+    animation: slideUp 0.4s ease both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .day-card:nth-child(1) { animation-delay: 0.05s; }
+  .day-card:nth-child(2) { animation-delay: 0.10s; }
+  .day-card:nth-child(3) { animation-delay: 0.15s; }
+  .day-card:nth-child(4) { animation-delay: 0.20s; }
+  .day-card:nth-child(5) { animation-delay: 0.25s; }
+  .day-card:nth-child(6) { animation-delay: 0.30s; }
+  .day-card:nth-child(7) { animation-delay: 0.35s; }
+
+  .day-header {
+    background: var(--parchment);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .day-emoji { font-size: 14px; }
+
+  .meals-grid {
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .meal-block {}
+  .meal-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .meal-label .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .meal-label.dinner .dot { background: var(--accent-warm); }
+
+  .meal-name {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .meal-detail {
+    font-size: 11px;
+    color: var(--ink-light);
+    font-weight: 300;
+    line-height: 1.4;
+  }
+  .meal-ingredients {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .ing-chip {
+    font-size: 10px;
+    background: var(--tag-bg);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+
+  /* SHOPPING LIST */
+  .shopping-btn {
+    width: 100%;
+    margin-top: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Lato', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .shopping-btn:hover { background: #6A7C3F; }
+
+  .shopping-list {
+    display: none;
+    margin-top: 12px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .shopping-list.visible { display: block; }
+  .shopping-list h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .shopping-category {
+    margin-bottom: 10px;
+  }
+  .shopping-cat-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 6px;
+  }
+  .shopping-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .shopping-item {
+    background: var(--parchment);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .shopping-item.checked {
+    text-decoration: line-through;
+    opacity: 0.4;
+    background: transparent;
+    border-color: var(--border);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px 30px;
+  }
+  .empty-state .big-emoji { font-size: 60px; margin-bottom: 16px; }
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .empty-sub {
+    font-size: 14px;
+    color: var(--ink-light);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  /* API KEY SECTION */
+  .api-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .api-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 6px;
+  }
+  .api-input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .api-input {
+    flex: 1;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--ink);
+    outline: none;
+  }
+  .api-input:focus { border-color: var(--accent); }
+  .api-save-btn {
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .api-status {
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 5px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Menus de <em>Saison</em></h1>
+  <div class="month-badge">
+    <span id="monthIcon">🌿</span>
+    <span id="currentMonth">Chargement...</span>
+  </div>
+</div>
+
+<div class="produce-strip">
+  <div class="produce-strip-label">🌱 Produits du mois</div>
+  <div class="produce-tags" id="produceTags">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- API KEY -->
+  <div class="api-section" style="margin-top:16px;">
+    <div class="api-label">🔑 Clé API Groq</div>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="gsk_...">
+      <button class="api-save-btn" onclick="saveApiKey()">Sauver</button>
+    </div>
+    <div class="api-status" id="apiStatus"></div>
+  </div>
+
+  <!-- PREFERENCES -->
+  <div class="prefs-row">
+    <button class="pref-btn active" data-pref="omnivore" onclick="togglePref(this)">🍖 Omnivore</button>
+    <button class="pref-btn" data-pref="vegetarien" onclick="togglePref(this)">🥗 Végétarien</button>
+    <button class="pref-btn" data-pref="vegan" onclick="togglePref(this)">🌱 Végan</button>
+    <button class="pref-btn" data-pref="sansgluten" onclick="togglePref(this)">🌾 Sans gluten</button>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="generate-section">
+    <button class="btn-generate" onclick="generateMenu()">
+      <span class="icon">✨</span>
+      Générer mon menu de la semaine
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" id="loadingState">
+    <div class="loading-leaf">🌿</div>
+    <div class="loading-text">Je compose votre menu avec les saveurs du mois...</div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-state" id="errorState"></div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState">
+    <div class="big-emoji">🥕</div>
+    <div class="empty-title">Prêt à cuisiner ?</div>
+    <div class="empty-sub">Entrez votre clé OpenAI, choisissez vos préférences et générez un menu de la semaine 100% de saison.</div>
+  </div>
+
+  <!-- WEEK MENU -->
+  <div class="week-container" id="weekContainer">
+    <div class="week-header">
+      <div class="week-title">Cette semaine</div>
+      <div class="week-meta" id="weekMeta"></div>
+    </div>
+    <div id="daysGrid"></div>
+    <button class="shopping-btn" onclick="toggleShopping()">
+      🛒 Liste de courses
+    </button>
+    <div class="shopping-list" id="shoppingList"></div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA : CALENDRIER DE SAISON
+// ============================================================
+const SAISON = {
+  1:  { label:"Janvier",   icon:"❄️",  legumes:["Chou","Poireau","Carotte","Panais","Salsifis","Betterave","Endive","Topinambour","Céleri","Mâche","Pomme de terre"], fruits:["Citron","Clémentine","Mandarine","Orange","Pomme","Poire","Kiwi"] },
+  2:  { label:"Février",   icon:"❄️",  legumes:["Chou","Chou-fleur","Brocoli","Carotte","Navet","Endive","Oignon","Chou de Bruxelles"], fruits:["Citron","Mandarine","Orange","Pomme","Poire","Kiwi"] },
+  3:  { label:"Mars",      icon:"🌱",  legumes:["Chou","Carotte","Pomme de terre","Endive","Asperge","Épinard","Radis","Poireau","Oignon"], fruits:["Citron","Pomme","Poire","Kiwi","Orange","Pomelo"] },
+  4:  { label:"Avril",     icon:"🌸",  legumes:["Asperge","Épinard","Radis","Laitue","Mesclun","Petits pois","Ail","Oignon","Céleri","Navet","Carotte","Endive"], fruits:["Pomme","Fraise","Rhubarbe"] },
+  5:  { label:"Mai",       icon:"🌼",  legumes:["Courgette","Concombre","Aubergine","Tomate","Laitue","Petits pois","Artichaut","Carotte","Radis"], fruits:["Cerise","Fraise","Rhubarbe"] },
+  6:  { label:"Juin",      icon:"☀️",  legumes:["Tomate","Poivron","Concombre","Courgette","Roquette","Cresson","Petits pois","Artichaut","Pomme de terre","Radis","Herbes aromatiques"], fruits:["Cerise","Fraise","Framboise","Groseille"] },
+  7:  { label:"Juillet",   icon:"🌞",  legumes:["Tomate","Aubergine","Courgette","Poivron","Salade","Fenouil","Brocoli","Fève","Haricot vert"], fruits:["Abricot","Pêche","Nectarine","Cerise","Cassis","Melon","Framboise","Groseille","Mûre"] },
+  8:  { label:"Août",      icon:"🌻",  legumes:["Tomate","Poivron","Aubergine","Haricot vert","Courgette","Pomme de terre","Fenouil"], fruits:["Melon","Pastèque","Pêche","Prune","Abricot","Raisin","Figue","Framboise"] },
+  9:  { label:"Septembre", icon:"🍂",  legumes:["Tomate","Courgette","Poivron","Aubergine","Courge","Potiron","Radis","Maïs","Salade"], fruits:["Pomme","Poire","Raisin","Figue","Prune","Framboise","Myrtille"] },
+  10: { label:"Octobre",   icon:"🍁",  legumes:["Courge","Potiron","Potimarron","Butternut","Betterave","Carotte","Navet","Poireau","Céleri","Chou","Champignons"], fruits:["Pomme","Poire","Raisin","Coing","Châtaigne","Noix","Noisette","Figue"] },
+  11: { label:"Novembre",  icon:"🍂",  legumes:["Chou","Poireau","Carotte","Navet","Betterave","Endive","Courge","Céleri","Topinambour","Mâche"], fruits:["Pomme","Poire","Kiwi","Coing","Noix","Châtaigne","Clémentine"] },
+  12: { label:"Décembre",  icon:"⛄",  legumes:["Chou","Poireau","Navet","Carotte","Salsifis","Betterave","Endive","Courge","Mâche"], fruits:["Pomme","Kiwi","Clémentine","Orange","Mandarine"] }
+};
+
+const JOURS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const JOUR_EMOJIS = ["☕","🌿","🔥","🌙","🎉","🌞","💚"];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentPref = "omnivore";
+let apiKey = localStorage.getItem("groq_key") || "";
+let currentMenu = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const data = SAISON[month];
+  document.getElementById("currentMonth").textContent = data.label + " " + now.getFullYear();
+  document.getElementById("monthIcon").textContent = data.icon;
+
+  // Produce tags
+  const container = document.getElementById("produceTags");
+  data.legumes.slice(0,8).forEach(l => {
+    const tag = document.createElement("span");
+    tag.className = "produce-tag";
+    tag.textContent = l;
+    container.appendChild(tag);
+  });
+  data.fruits.slice(0,6).forEach(f => {
+    const tag = document.createElement("span");
+    tag.className = "produce-tag fruit";
+    tag.textContent = f;
+    container.appendChild(tag);
+  });
+
+  // API key
+  if (apiKey) {
+    document.getElementById("apiStatus").textContent = "✓ Clé enregistrée";
+    document.getElementById("apiKeyInput").value = "gsk_••••••••••••••••";
+  }
+}
+
+// ============================================================
+// API KEY
+// ============================================================
+function saveApiKey() {
+  const val = document.getElementById("apiKeyInput").value.trim();
+  if (val && val.startsWith("gsk_")) {
+    apiKey = val;
+    localStorage.setItem("groq_key", val);
+    document.getElementById("apiStatus").textContent = "✓ Clé enregistrée";
+    document.getElementById("apiKeyInput").value = "gsk_••••••••••••••••";
+  } else {
+    document.getElementById("apiStatus").style.color = "#C84040";
+    document.getElementById("apiStatus").textContent = "⚠ Clé invalide (doit commencer par gsk_)";
+  }
+}
+
+// ============================================================
+// PREFERENCES
+// ============================================================
+function togglePref(btn) {
+  document.querySelectorAll(".pref-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentPref = btn.dataset.pref;
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+async function generateMenu() {
+  if (!apiKey) {
+    showError("Veuillez entrer votre clé API Groq pour générer un menu.");
+    return;
+  }
+
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const data = SAISON[month];
+  const legumes = data.legumes.join(", ");
+  const fruits = data.fruits.join(", ");
+
+  setLoading(true);
+  hideError();
+  hideWeek();
+  document.getElementById("emptyState").style.display = "none";
+
+  const prompt = `Tu es un chef cuisinier français spécialisé dans la cuisine de saison.
+
+Génère un menu de la semaine complète (7 jours, du lundi au dimanche) avec pour chaque jour un déjeuner et un dîner.
+
+Mois : ${data.label}
+Légumes de saison disponibles : ${legumes}
+Fruits de saison disponibles : ${fruits}
+Régime alimentaire : ${currentPref}
+
+Règles :
+- Utilise principalement les légumes et fruits listés
+- Plats simples, réalistes, savoureux, typiquement français/méditerranéens
+- Varier les modes de cuisson et les protéines
+- Pour chaque repas : un nom de plat court + description courte (max 10 mots) + 2-3 ingrédients clés de saison
+
+Réponds UNIQUEMENT en JSON valide, sans commentaires ni balises markdown, avec cette structure exacte :
+{
+  "semaine": [
+    {
+      "jour": "Lundi",
+      "dejeuner": {
+        "nom": "...",
+        "description": "...",
+        "ingredients": ["...", "..."]
+      },
+      "diner": {
+        "nom": "...",
+        "description": "...",
+        "ingredients": ["...", "..."]
+      }
+    }
+  ],
+  "liste_courses": {
+    "legumes": ["..."],
+    "fruits": ["..."],
+    "proteines": ["..."],
+    "epicerie": ["..."]
+  }
+}`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 2500,
+        temperature: 0.8,
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `Erreur ${response.status}`);
+    }
+
+    const data2 = await response.json();
+    const raw = data2.choices[0].message.content.trim();
+    const clean = raw.replace(/```json|```/g, "").trim();
+    currentMenu = JSON.parse(clean);
+
+    setLoading(false);
+    renderWeek(currentMenu);
+
+  } catch(e) {
+    setLoading(false);
+    showError("Erreur : " + e.message);
+    document.getElementById("emptyState").style.display = "block";
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderWeek(menu) {
+  const now = new Date();
+  document.getElementById("weekMeta").textContent = SAISON[now.getMonth()+1].label + " · " + currentPref;
+
+  const grid = document.getElementById("daysGrid");
+  grid.innerHTML = "";
+
+  menu.semaine.forEach((day, i) => {
+    const card = document.createElement("div");
+    card.className = "day-card";
+    card.innerHTML = `
+      <div class="day-header">
+        <div class="day-name">${day.jour}</div>
+        <div class="day-emoji">${JOUR_EMOJIS[i]}</div>
+      </div>
+      <div class="meals-grid">
+        <div class="meal-block">
+          <div class="meal-label"><span class="dot"></span> Déjeuner</div>
+          <div class="meal-name">${day.dejeuner.nom}</div>
+          <div class="meal-detail">${day.dejeuner.description}</div>
+          <div class="meal-ingredients">${(day.dejeuner.ingredients||[]).map(i=>`<span class="ing-chip">${i}</span>`).join("")}</div>
+        </div>
+        <div class="meal-block">
+          <div class="meal-label dinner"><span class="dot"></span> Dîner</div>
+          <div class="meal-name">${day.diner.nom}</div>
+          <div class="meal-detail">${day.diner.description}</div>
+          <div class="meal-ingredients">${(day.diner.ingredients||[]).map(i=>`<span class="ing-chip">${i}</span>`).join("")}</div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  document.getElementById("weekContainer").classList.add("visible");
+  document.getElementById("shoppingList").classList.remove("visible");
+}
+
+function toggleShopping() {
+  const sl = document.getElementById("shoppingList");
+  if (!sl.classList.contains("visible")) {
+    renderShopping();
+    sl.classList.add("visible");
+  } else {
+    sl.classList.remove("visible");
+  }
+}
+
+function renderShopping() {
+  if (!currentMenu?.liste_courses) return;
+  const lc = currentMenu.liste_courses;
+  const cats = [
+    { key: "legumes", label: "🥦 Légumes", items: lc.legumes || [] },
+    { key: "fruits", label: "🍎 Fruits", items: lc.fruits || [] },
+    { key: "proteines", label: "🥩 Protéines", items: lc.proteines || [] },
+    { key: "epicerie", label: "🏪 Épicerie", items: lc.epicerie || [] }
+  ];
+
+  const sl = document.getElementById("shoppingList");
+  sl.innerHTML = `<h3>🛒 Liste de courses</h3>`;
+  cats.forEach(cat => {
+    if (!cat.items.length) return;
+    const div = document.createElement("div");
+    div.className = "shopping-category";
+    div.innerHTML = `<div class="shopping-cat-title">${cat.label}</div>
+      <div class="shopping-items">
+        ${cat.items.map(item => `<span class="shopping-item" onclick="this.classList.toggle('checked')">${item}</span>`).join("")}
+      </div>`;
+    sl.appendChild(div);
+  });
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setLoading(v) {
+  document.getElementById("loadingState").classList.toggle("visible", v);
+}
+function showError(msg) {
+  const el = document.getElementById("errorState");
+  el.textContent = msg;
+  el.classList.add("visible");
+}
+function hideError() {
+  document.getElementById("errorState").classList.remove("visible");
+}
+function hideWeek() {
+  document.getElementById("weekContainer").classList.remove("visible");
+}
+
+init();
+</script>
+</body>
+</html>
