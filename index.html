@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Menus de Saison</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --parchment: #EDE5D0;
+    --ink: #2C2416;
+    --ink-light: #5C4E36;
+    --accent: #7A8C4F;
+    --accent-warm: #C8773A;
+    --accent-light: #A8B870;
+    --tag-bg: #E8EED8;
+    --card-bg: #FDFAF3;
+    --shadow: rgba(44,36,22,0.12);
+    --border: rgba(44,36,22,0.15);
+    --reject: #E05252;
+    --accept: #4CAF82;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--cream);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    font-family: 'Lato', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  .app-header {
+    background: var(--ink);
+    padding: 20px 20px 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .app-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; color: var(--cream);
+    letter-spacing: -0.5px; line-height: 1.1;
+  }
+  .app-header h1 em { color: var(--accent-light); font-style: italic; }
+  .month-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 6px; background: var(--accent); color: white;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+  }
+
+  .produce-strip {
+    background: var(--parchment);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .produce-strip-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--ink-light); margin-bottom: 7px;
+  }
+  .produce-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .produce-tag {
+    background: var(--tag-bg); border: 1px solid rgba(120,140,79,0.3);
+    color: var(--ink); font-size: 10px; padding: 2px 7px; border-radius: 10px;
+  }
+  .produce-tag.fruit { background: #FEF0E0; border-color: rgba(200,119,58,0.3); }
+
+  /* METEO STRIP */
+  .meteo-strip {
+    background: #EAF2FB;
+    padding: 10px 16px 12px;
+    border-bottom: 1px solid rgba(100,150,200,0.2);
+  }
+  .meteo-strip-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: #4A7AA0; margin-bottom: 8px;
+  }
+  .meteo-days { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; }
+  .meteo-day {
+    flex-shrink: 0; background: white; border-radius: 10px;
+    padding: 6px 8px; text-align: center; min-width: 42px;
+    border: 1px solid rgba(100,150,200,0.2);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .meteo-day-name { font-size: 9px; font-weight: 700; color: #4A7AA0; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meteo-day-icon { font-size: 18px; margin: 2px 0; line-height: 1; }
+  .meteo-day-temp { font-size: 10px; font-weight: 700; color: var(--ink); }
+  .meteo-day-temp span { font-weight: 300; color: var(--ink-light); }
+
+  .content { padding: 0 14px 100px; }
+
+  .api-section {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-top: 14px;
+  }
+  .api-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px;
+  }
+  .api-input-row { display: flex; gap: 7px; }
+  .api-input {
+    flex: 1; background: var(--parchment); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 12px;
+    font-family: monospace; color: var(--ink); outline: none;
+  }
+  .api-input:focus { border-color: var(--accent); }
+  .api-save-btn {
+    background: var(--ink); color: var(--cream); border: none;
+    border-radius: 8px; padding: 8px 12px; font-size: 11px;
+    font-weight: 700; cursor: pointer; text-transform: uppercase;
+  }
+  .api-status { font-size: 11px; color: var(--accent); margin-top: 4px; font-weight: 700; }
+
+  .prefs-row { display: flex; gap: 6px; margin-top: 10px; }
+  .pref-btn {
+    flex: 1; background: var(--card-bg); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 7px 2px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.3px; color: var(--ink-light); cursor: pointer;
+    text-align: center; transition: all 0.15s; text-transform: uppercase;
+  }
+  .pref-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .generate-section { padding: 12px 0 4px; }
+  .btn-generate {
+    width: 100%; background: var(--ink); color: var(--cream); border: none;
+    border-radius: 14px; padding: 15px 20px;
+    font-family: 'Playfair Display', serif; font-size: 16px; font-style: italic;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 10px; transition: transform 0.15s, background 0.2s;
+  }
+  .btn-generate:hover { background: #3D3220; transform: translateY(-1px); }
+  .btn-generate:active { transform: translateY(0); }
+
+  .loading-state { display: none; text-align: center; padding: 40px 20px; }
+  .loading-state.visible { display: block; }
+  .loading-leaf { font-size: 36px; animation: sway 1.2s ease-in-out infinite alternate; display: inline-block; }
+  @keyframes sway { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+  .loading-text { font-family: 'Playfair Display', serif; font-style: italic; color: var(--ink-light); margin-top: 12px; font-size: 15px; }
+
+  .error-state {
+    display: none; background: #FFF5F0; border: 1px solid #F0C0A0;
+    border-radius: 12px; padding: 14px; margin-top: 14px; font-size: 13px; color: #8B4513;
+  }
+  .error-state.visible { display: block; }
+
+  .empty-state { text-align: center; padding: 40px 20px 20px; }
+  .empty-state .big-emoji { font-size: 52px; margin-bottom: 14px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 8px; }
+  .empty-sub { font-size: 13px; color: var(--ink-light); line-height: 1.5; font-weight: 300; }
+
+  .week-container { display: none; margin-top: 16px; }
+  .week-container.visible { display: block; }
+  .week-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+  .week-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+  .week-meta { font-size: 11px; color: var(--ink-light); font-weight: 300; }
+
+  .day-card {
+    background: var(--card-bg); border-radius: 16px; margin-bottom: 12px;
+    overflow: hidden; border: 1px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow); animation: slideUp 0.4s ease both;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .day-card:nth-child(1){animation-delay:0.05s} .day-card:nth-child(2){animation-delay:0.10s}
+  .day-card:nth-child(3){animation-delay:0.15s} .day-card:nth-child(4){animation-delay:0.20s}
+  .day-card:nth-child(5){animation-delay:0.25s} .day-card:nth-child(6){animation-delay:0.30s}
+  .day-card:nth-child(7){animation-delay:0.35s}
+
+  .day-header {
+    background: var(--parchment); padding: 9px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; }
+  .day-emoji { font-size: 14px; }
+
+  .meal-slot { padding: 10px 14px; }
+  .meal-slot-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--ink-light);
+    display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+  }
+  .meal-slot-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .meal-slot-label.dinner .dot { background: var(--accent-warm); }
+  .meal-divider { height: 1px; background: var(--border); margin: 0 14px; }
+
+  /* TINDER STACK */
+  .tinder-stack {
+    position: relative;
+    height: 185px;
+    margin-bottom: 8px;
+  }
+  .tinder-stack::before, .tinder-stack::after {
+    content: '';
+    position: absolute;
+    left: 4px; right: 4px;
+    border-radius: 12px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+  }
+  .tinder-stack::before { top: 8px; bottom: -4px; z-index: 1; opacity: 0.5; }
+  .tinder-stack::after  { top: 4px; bottom: -2px; z-index: 2; opacity: 0.75; }
+
+  .meal-proposal {
+    position: absolute; inset: 0; z-index: 3;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 9px 11px;
+    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: 0 3px 12px var(--shadow);
+    transition: transform 0.08s ease;
+    user-select: none;
+    overflow: hidden;
+  }
+  .meal-proposal.swipe-left  { animation: swipeLeft  0.32s ease forwards; }
+  .meal-proposal.swipe-right { animation: swipeRight 0.32s ease forwards; }
+  @keyframes swipeLeft  { to { transform: translateX(-130%) rotate(-16deg); opacity: 0; } }
+  @keyframes swipeRight { to { transform: translateX(130%)  rotate(16deg);  opacity: 0; } }
+
+  .proposal-stamp {
+    position: absolute; top: 9px;
+    font-size: 11px; font-weight: 900; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 5px;
+    border-width: 2px; border-style: solid; opacity: 0; pointer-events: none; z-index: 10;
+    transition: opacity 0.1s;
+  }
+  .proposal-stamp.reject { right: 9px; color: var(--reject); border-color: var(--reject); }
+  .proposal-stamp.accept { left: 9px;  color: var(--accept); border-color: var(--accept); }
+
+  .proposal-counter { font-size: 9px; color: var(--ink-light); font-weight: 700; text-align: right; }
+  .proposal-sections { flex: 1; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+  .proposal-row { display: flex; gap: 6px; align-items: flex-start; }
+  .proposal-icon { font-size: 11px; flex-shrink: 0; width: 15px; text-align: center; margin-top: 1px; }
+  .proposal-name { font-size: 12px; font-weight: 700; line-height: 1.2; color: var(--ink); }
+  .proposal-detail { font-size: 10px; color: var(--ink-light); line-height: 1.3; }
+  .proposal-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+  .badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
+  .badge-proteine { background: #FDE8D8; color: #9B4820; }
+  .badge-feculent  { background: #EEE8D5; color: #6B5B2E; }
+
+  .tinder-actions {
+    display: flex; justify-content: center; gap: 24px; margin-top: 6px; padding-bottom: 2px;
+  }
+  .btn-reject, .btn-accept {
+    width: 50px; height: 50px; border-radius: 50%; border: none;
+    font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s;
+  }
+  .btn-reject { background: white; color: var(--reject); border: 2px solid #F5C0C0; }
+  .btn-accept { background: white; color: var(--accept); border: 2px solid #B0E0C8; }
+  .btn-reject:active, .btn-accept:active { transform: scale(0.88); box-shadow: none; }
+
+  .accepted-meal {
+    background: #F0FAF4; border: 1.5px solid #B0E0C8;
+    border-radius: 12px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 5px; position: relative;
+  }
+  .accepted-check { position: absolute; top: 8px; right: 10px; font-size: 14px; color: var(--accept); }
+  .accepted-change {
+    font-size: 10px; color: var(--ink-light); font-weight: 700;
+    letter-spacing: 0.5px; text-decoration: underline;
+    cursor: pointer; margin-top: 2px; text-align: right;
+  }
+  .exhausted-meal {
+    background: #FFF8F0; border: 1.5px solid #F0C0A0;
+    border-radius: 12px; padding: 12px; text-align: center;
+    color: var(--accent-warm); font-size: 12px; font-weight: 700; line-height: 1.6;
+  }
+
+  .shopping-btn {
+    width: 100%; margin-top: 14px; background: var(--accent); color: white;
+    border: none; border-radius: 12px; padding: 13px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s;
+  }
+  .shopping-btn:hover { background: #6A7C3F; }
+  .shopping-list {
+    display: none; margin-top: 10px; background: var(--card-bg);
+    border-radius: 14px; border: 1px solid var(--border); padding: 14px;
+  }
+  .shopping-list.visible { display: block; }
+  .shopping-list h3 { font-family: 'Playfair Display', serif; font-size: 15px; margin-bottom: 10px; }
+  .shopping-category { margin-bottom: 10px; }
+  .shopping-cat-title { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-light); margin-bottom: 5px; }
+  .shopping-items { display: flex; flex-wrap: wrap; gap: 4px; }
+  .shopping-item {
+    background: var(--parchment); font-size: 11px; padding: 3px 9px;
+    border-radius: 9px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+  }
+  .shopping-item.checked { text-decoration: line-through; opacity: 0.4; background: transparent; border-color: var(--border); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Menus de <em>Saison</em></h1>
+  <div class="month-badge"><span id="monthIcon">🌿</span> <span id="currentMonth">...</span></div>
+</div>
+
+<div class="produce-strip">
+  <div class="produce-strip-label">🌱 Produits du mois</div>
+  <div class="produce-tags" id="produceTags"></div>
+</div>
+
+<div class="meteo-strip" id="meteoStrip" style="display:none">
+  <div class="meteo-strip-label">🌤️ Météo Lille — 7 jours</div>
+  <div class="meteo-days" id="meteoDays"></div>
+</div>
+
+<div class="content">
+  <div class="api-section">
+    <div class="api-label">🔑 Clé API Groq</div>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="gsk_...">
+      <button class="api-save-btn" onclick="saveApiKey()">Sauver</button>
+    </div>
+    <div class="api-status" id="apiStatus"></div>
+  </div>
+
+  <div class="prefs-row">
+    <button class="pref-btn active" data-pref="omnivore"   onclick="togglePref(this)">🍖 Omni</button>
+    <button class="pref-btn"        data-pref="vegetarien" onclick="togglePref(this)">🥗 Végé</button>
+    <button class="pref-btn"        data-pref="vegan"      onclick="togglePref(this)">🌱 Végan</button>
+    <button class="pref-btn"        data-pref="sansgluten" onclick="togglePref(this)">🌾 S.Gluten</button>
+  </div>
+
+  <div class="generate-section">
+    <button class="btn-generate" onclick="generateMenu()">
+      <span>✨</span> Générer mon menu de la semaine
+    </button>
+  </div>
+
+  <div class="loading-state" id="loadingState">
+    <div class="loading-leaf">🌿</div>
+    <div class="loading-text">Je compose 3 propositions par repas...</div>
+  </div>
+  <div class="error-state" id="errorState"></div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="big-emoji">🥕</div>
+    <div class="empty-title">Prêt à cuisiner ?</div>
+    <div class="empty-sub">3 propositions par repas — gardez ou rejetez à la manière Tinder. Swipe ou utilisez les boutons ✗ / ✓</div>
+  </div>
+
+  <div class="week-container" id="weekContainer">
+    <div class="week-header">
+      <div class="week-title">Cette semaine</div>
+      <div class="week-meta" id="weekMeta"></div>
+    </div>
+    <div id="daysGrid"></div>
+    <button class="shopping-btn" onclick="toggleShopping()">🛒 Liste de courses</button>
+    <div class="shopping-list" id="shoppingList"></div>
+  </div>
+</div>
+
+<script>
+const SAISON = {
+  1:  { label:"Janvier",   icon:"❄️",  legumes:["Chou","Poireau","Carotte","Panais","Salsifis","Betterave","Endive","Topinambour","Céleri","Mâche","Pomme de terre"], fruits:["Citron","Clémentine","Mandarine","Orange","Pomme","Poire","Kiwi"] },
+  2:  { label:"Février",   icon:"❄️",  legumes:["Chou","Chou-fleur","Brocoli","Carotte","Navet","Endive","Oignon","Chou de Bruxelles"], fruits:["Citron","Mandarine","Orange","Pomme","Poire","Kiwi"] },
+  3:  { label:"Mars",      icon:"🌱",  legumes:["Chou","Carotte","Pomme de terre","Endive","Asperge","Épinard","Radis","Poireau","Oignon"], fruits:["Citron","Pomme","Poire","Kiwi","Orange","Pomelo"] },
+  4:  { label:"Avril",     icon:"🌸",  legumes:["Asperge","Épinard","Radis","Laitue","Mesclun","Petits pois","Ail","Oignon","Céleri","Navet","Carotte","Endive"], fruits:["Pomme","Fraise","Rhubarbe"] },
+  5:  { label:"Mai",       icon:"🌼",  legumes:["Courgette","Concombre","Aubergine","Tomate","Laitue","Petits pois","Artichaut","Carotte","Radis"], fruits:["Cerise","Fraise","Rhubarbe"] },
+  6:  { label:"Juin",      icon:"☀️",  legumes:["Tomate","Poivron","Concombre","Courgette","Roquette","Cresson","Petits pois","Artichaut","Pomme de terre","Radis","Herbes aromatiques"], fruits:["Cerise","Fraise","Framboise","Groseille"] },
+  7:  { label:"Juillet",   icon:"🌞",  legumes:["Tomate","Aubergine","Courgette","Poivron","Salade","Fenouil","Brocoli","Fève","Haricot vert"], fruits:["Abricot","Pêche","Nectarine","Cerise","Cassis","Melon","Framboise","Groseille","Mûre"] },
+  8:  { label:"Août",      icon:"🌻",  legumes:["Tomate","Poivron","Aubergine","Haricot vert","Courgette","Pomme de terre","Fenouil"], fruits:["Melon","Pastèque","Pêche","Prune","Abricot","Raisin","Figue","Framboise"] },
+  9:  { label:"Septembre", icon:"🍂",  legumes:["Tomate","Courgette","Poivron","Aubergine","Courge","Potiron","Radis","Maïs","Salade"], fruits:["Pomme","Poire","Raisin","Figue","Prune","Framboise","Myrtille"] },
+  10: { label:"Octobre",   icon:"🍁",  legumes:["Courge","Potiron","Potimarron","Butternut","Betterave","Carotte","Navet","Poireau","Céleri","Chou","Champignons"], fruits:["Pomme","Poire","Raisin","Coing","Châtaigne","Noix","Noisette","Figue"] },
+  11: { label:"Novembre",  icon:"🍂",  legumes:["Chou","Poireau","Carotte","Navet","Betterave","Endive","Courge","Céleri","Topinambour","Mâche"], fruits:["Pomme","Poire","Kiwi","Coing","Noix","Châtaigne","Clémentine"] },
+  12: { label:"Décembre",  icon:"⛄",  legumes:["Chou","Poireau","Navet","Carotte","Salsifis","Betterave","Endive","Courge","Mâche"], fruits:["Pomme","Kiwi","Clémentine","Orange","Mandarine"] }
+};
+const JOUR_EMOJIS = ["☕","🌿","🔥","🌙","🎉","🌞","💚"];
+
+let currentPref = "omnivore";
+let apiKey = localStorage.getItem("groq_key") || "";
+let currentMenu = null;
+let choices = {};
+let meteoData = null;
+
+// Codes WMO → emoji + label
+const WMO = {
+  0:"☀️ Ciel dégagé", 1:"🌤️ Peu nuageux", 2:"⛅ Partiellement nuageux", 3:"☁️ Couvert",
+  45:"🌫️ Brouillard", 48:"🌫️ Brouillard givrant",
+  51:"🌦️ Bruine légère", 53:"🌦️ Bruine", 55:"🌧️ Bruine dense",
+  61:"🌧️ Pluie légère", 63:"🌧️ Pluie", 65:"🌧️ Pluie forte",
+  71:"🌨️ Neige légère", 73:"🌨️ Neige", 75:"🌨️ Neige forte",
+  80:"🌦️ Averses légères", 81:"🌧️ Averses", 82:"⛈️ Averses violentes",
+  95:"⛈️ Orage", 96:"⛈️ Orage grêle", 99:"⛈️ Orage violent"
+};
+const JOURS_COURTS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+
+async function fetchMeteo() {
+  try {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=50.6292&longitude=3.0573&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis&forecast_days=7";
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const days = data.daily.time.map((date, i) => ({
+      date,
+      jourCourt: JOURS_COURTS[new Date(date).getDay()],
+      code: data.daily.weathercode[i],
+      tmax: Math.round(data.daily.temperature_2m_max[i]),
+      tmin: Math.round(data.daily.temperature_2m_min[i]),
+      label: WMO[data.daily.weathercode[i]] || "🌡️ Variable"
+    }));
+    meteoData = days;
+    renderMeteoStrip(days);
+    return days;
+  } catch(e) {
+    console.warn("Météo indisponible", e);
+    return null;
+  }
+}
+
+function renderMeteoStrip(days) {
+  const strip = document.getElementById("meteoStrip");
+  const container = document.getElementById("meteoDays");
+  container.innerHTML = days.map(d => `
+    <div class="meteo-day">
+      <div class="meteo-day-name">${d.jourCourt}</div>
+      <div class="meteo-day-icon">${d.label.split(' ')[0]}</div>
+      <div class="meteo-day-temp">${d.tmax}° <span>${d.tmin}°</span></div>
+    </div>`).join('');
+  strip.style.display = 'block';
+}
+
+function meteoToPrompt(days) {
+  if (!days || !days.length) return "";
+  const lignes = days.map(d => `- ${d.jourCourt} ${d.date}: ${d.label.replace(/^[^ ]+ /, '')}, ${d.tmin}°C–${d.tmax}°C`).join("\n");
+  return `\nMétéo prévue à Lille cette semaine :\n${lignes}\n→ Adapte les plats selon la météo : par temps froid/pluvieux, favorise les soupes, plats mijotés, gratins réconfortants. Par temps doux/ensoleillé, propose davantage de salades, plats froids, grillades légères.`;
+}
+
+function init() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const d = SAISON[month];
+  document.getElementById("currentMonth").textContent = d.label + " " + now.getFullYear();
+  document.getElementById("monthIcon").textContent = d.icon;
+  const c = document.getElementById("produceTags");
+  d.legumes.slice(0,8).forEach(l => { const t = document.createElement("span"); t.className = "produce-tag"; t.textContent = l; c.appendChild(t); });
+  d.fruits.slice(0,5).forEach(f => { const t = document.createElement("span"); t.className = "produce-tag fruit"; t.textContent = f; c.appendChild(t); });
+  if (apiKey) { document.getElementById("apiStatus").textContent = "✓ Clé enregistrée"; document.getElementById("apiKeyInput").value = "gsk_••••••••••••••••"; }
+  fetchMeteo(); // charge la météo dès l'ouverture
+}
+
+function saveApiKey() {
+  const val = document.getElementById("apiKeyInput").value.trim();
+  if (val && val.startsWith("gsk_")) {
+    apiKey = val; localStorage.setItem("groq_key", val);
+    document.getElementById("apiStatus").textContent = "✓ Clé enregistrée";
+    document.getElementById("apiKeyInput").value = "gsk_••••••••••••••••";
+  } else {
+    document.getElementById("apiStatus").style.color = "#C84040";
+    document.getElementById("apiStatus").textContent = "⚠ Clé invalide (doit commencer par gsk_)";
+  }
+}
+
+function togglePref(btn) {
+  document.querySelectorAll(".pref-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active"); currentPref = btn.dataset.pref;
+}
+
+async function generateMenu() {
+  if (!apiKey) { showError("Veuillez entrer votre clé API Groq."); return; }
+  const now = new Date(); const month = now.getMonth() + 1; const d = SAISON[month];
+  setLoading(true); hideError(); hideWeek();
+  document.getElementById("emptyState").style.display = "none";
+  choices = {};
+
+  // Récupère la météo en parallèle
+  const meteo = await fetchMeteo();
+  const meteoSection = meteoToPrompt(meteo);
+
+  const prompt = `Tu es un chef cuisinier français spécialisé dans la cuisine de saison et la nutrition équilibrée.
+
+Génère un menu de la semaine (7 jours, lundi au dimanche).
+Pour chaque jour : un déjeuner ET un dîner.
+Pour chaque repas, génère EXACTEMENT 3 propositions différentes et variées.
+Chaque proposition comprend :
+- 1 entrée (salade, soupe, velouté, crudités...)
+- 1 plat principal avec protéine (viande, poisson, oeuf, légumineuse) ET féculent (riz, pâtes, pommes de terre, lentilles, quinoa...)
+- 1 dessert léger (fruit de saison, yaourt, compote, tarte fine...)
+
+Mois : ${d.label}
+Légumes de saison : ${d.legumes.join(", ")}
+Fruits de saison : ${d.fruits.join(", ")}
+Régime : ${currentPref}
+${meteoSection}
+Règles :
+- Varier protéines et féculents entre les 3 propositions et sur la semaine
+- Plats simples, savoureux, typiquement français/méditerranéens
+- Utiliser les légumes et fruits de saison listés
+- Noms courts (max 5 mots), descriptions max 7 mots
+
+Réponds UNIQUEMENT en JSON valide sans markdown :
+{
+  "semaine": [
+    {
+      "jour": "Lundi",
+      "dejeuner": [
+        { "entree": { "nom": "...", "description": "..." }, "plat": { "nom": "...", "description": "...", "proteine": "...", "feculent": "...", "ingredients": ["..."] }, "dessert": { "nom": "..." } },
+        { "entree": { "nom": "...", "description": "..." }, "plat": { "nom": "...", "description": "...", "proteine": "...", "feculent": "...", "ingredients": ["..."] }, "dessert": { "nom": "..." } },
+        { "entree": { "nom": "...", "description": "..." }, "plat": { "nom": "...", "description": "...", "proteine": "...", "feculent": "...", "ingredients": ["..."] }, "dessert": { "nom": "..." } }
+      ],
+      "diner": [ ... meme structure 3 propositions ... ]
+    }
+  ],
+  "liste_courses": { "legumes": ["..."], "fruits": ["..."], "proteines": ["..."], "feculents": ["..."], "epicerie": ["..."] }
+}`;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: "llama-3.3-70b-versatile", max_tokens: 8000, temperature: 0.85, response_format: { type: "json_object" }, messages: [{ role: "user", content: prompt }] })
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `Erreur ${res.status}`); }
+    const data = await res.json();
+    const raw = data.choices[0].message.content.trim().replace(/```json|```/g, "").trim();
+    currentMenu = JSON.parse(raw);
+    setLoading(false); renderWeek();
+  } catch(e) {
+    setLoading(false); showError("Erreur : " + e.message);
+    document.getElementById("emptyState").style.display = "block";
+  }
+}
+
+function renderWeek() {
+  const now = new Date();
+  document.getElementById("weekMeta").textContent = SAISON[now.getMonth()+1].label + " · " + currentPref;
+  const grid = document.getElementById("daysGrid"); grid.innerHTML = "";
+  currentMenu.semaine.forEach((day, di) => {
+    if (!choices[di]) choices[di] = { dejeuner: 0, diner: 0 };
+    const card = document.createElement("div"); card.className = "day-card";
+    card.innerHTML = `
+      <div class="day-header"><div class="day-name">${day.jour}</div><div class="day-emoji">${JOUR_EMOJIS[di]}</div></div>
+      <div class="meal-slot" id="slot-${di}-dejeuner">
+        <div class="meal-slot-label"><span class="dot"></span> Déjeuner</div>
+        ${renderMealSlot(day.dejeuner, di, 'dejeuner')}
+      </div>
+      <div class="meal-divider"></div>
+      <div class="meal-slot" id="slot-${di}-diner">
+        <div class="meal-slot-label dinner"><span class="dot"></span> Dîner</div>
+        ${renderMealSlot(day.diner, di, 'diner')}
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById("weekContainer").classList.add("visible");
+  document.getElementById("shoppingList").classList.remove("visible");
+  attachSwipeListeners();
+}
+
+function renderMealSlot(proposals, di, mealType) {
+  if (!proposals || !proposals.length) return '<div class="exhausted-meal">Aucune proposition</div>';
+  const state = choices[di][mealType];
+  if (state === 'accepted') {
+    const idx = choices[di][mealType + '_idx'] || 0;
+    return renderAccepted(proposals[idx], di, mealType);
+  }
+  if (state === 'exhausted') return `<div class="exhausted-meal">😅 Toutes rejetées !<br><span style="font-size:10px;font-weight:400">Régénère le menu pour de nouvelles idées</span></div>`;
+  const idx = typeof state === 'number' ? state : 0;
+  if (idx >= proposals.length) return `<div class="exhausted-meal">😅 Toutes rejetées !</div>`;
+  const p = proposals[idx]; const total = proposals.length;
+  const dots = Array.from({length: total}, (_, i) => `<span style="width:6px;height:6px;border-radius:50%;display:inline-block;margin:0 2px;background:${i===idx?'var(--ink)':'var(--border)'};"></span>`).join('');
+  return `
+    <div class="tinder-stack" data-di="${di}" data-meal="${mealType}">
+      <div class="meal-proposal" id="proposal-${di}-${mealType}">
+        <div class="proposal-stamp reject">✗ Non</div>
+        <div class="proposal-stamp accept">✓ Oui</div>
+        <div class="proposal-counter">${dots} ${idx+1} / ${total}</div>
+        <div class="proposal-sections">
+          <div class="proposal-row"><span class="proposal-icon">🥗</span><div><div class="proposal-name">${p.entree?.nom||''}</div><div class="proposal-detail">${p.entree?.description||''}</div></div></div>
+          <div class="proposal-row"><span class="proposal-icon">🍽️</span><div>
+            <div class="proposal-name">${p.plat?.nom||''}</div>
+            <div class="proposal-detail">${p.plat?.description||''}</div>
+            <div class="proposal-badges">
+              ${p.plat?.proteine?`<span class="badge badge-proteine">🥩 ${p.plat.proteine}</span>`:''}
+              ${p.plat?.feculent?`<span class="badge badge-feculent">🌾 ${p.plat.feculent}</span>`:''}
+            </div>
+          </div></div>
+          <div class="proposal-row"><span class="proposal-icon">🍮</span><div><div class="proposal-name">${p.dessert?.nom||''}</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tinder-actions">
+      <button class="btn-reject" onclick="rejectProposal(${di},'${mealType}')">✗</button>
+      <button class="btn-accept" onclick="acceptProposal(${di},'${mealType}')">✓</button>
+    </div>`;
+}
+
+function renderAccepted(p, di, mealType) {
+  if (!p) return '';
+  return `<div class="accepted-meal">
+    <span class="accepted-check">✓</span>
+    <div class="proposal-sections">
+      <div class="proposal-row"><span class="proposal-icon">🥗</span><div><div class="proposal-name">${p.entree?.nom||''}</div></div></div>
+      <div class="proposal-row"><span class="proposal-icon">🍽️</span><div>
+        <div class="proposal-name">${p.plat?.nom||''}</div>
+        <div class="proposal-badges">
+          ${p.plat?.proteine?`<span class="badge badge-proteine">🥩 ${p.plat.proteine}</span>`:''}
+          ${p.plat?.feculent?`<span class="badge badge-feculent">🌾 ${p.plat.feculent}</span>`:''}
+        </div>
+      </div></div>
+      <div class="proposal-row"><span class="proposal-icon">🍮</span><div><div class="proposal-name">${p.dessert?.nom||''}</div></div></div>
+    </div>
+    <div class="accepted-change" onclick="resetProposal(${di},'${mealType}')">↩ Changer</div>
+  </div>`;
+}
+
+function acceptProposal(di, mealType) {
+  const idx = typeof choices[di][mealType] === 'number' ? choices[di][mealType] : 0;
+  animateSwipe(di, mealType, 'right', () => {
+    choices[di][mealType] = 'accepted'; choices[di][mealType+'_idx'] = idx; refreshSlot(di, mealType);
+  });
+}
+function rejectProposal(di, mealType) {
+  const proposals = currentMenu.semaine[di][mealType];
+  const idx = typeof choices[di][mealType] === 'number' ? choices[di][mealType] : 0;
+  animateSwipe(di, mealType, 'left', () => {
+    const next = idx + 1;
+    choices[di][mealType] = next >= proposals.length ? 'exhausted' : next;
+    refreshSlot(di, mealType);
+  });
+}
+function resetProposal(di, mealType) {
+  choices[di][mealType] = 0; choices[di][mealType+'_idx'] = undefined; refreshSlot(di, mealType);
+}
+
+function animateSwipe(di, mealType, dir, cb) {
+  const card = document.getElementById(`proposal-${di}-${mealType}`);
+  if (!card) { cb(); return; }
+  const stamp = card.querySelector(`.proposal-stamp.${dir==='left'?'reject':'accept'}`);
+  if (stamp) stamp.style.opacity = '1';
+  card.classList.add(dir==='left'?'swipe-left':'swipe-right');
+  setTimeout(cb, 330);
+}
+
+function refreshSlot(di, mealType) {
+  const day = currentMenu.semaine[di];
+  const slotEl = document.getElementById(`slot-${di}-${mealType}`);
+  if (!slotEl) return;
+  const labelHTML = slotEl.querySelector('.meal-slot-label').outerHTML;
+  slotEl.innerHTML = labelHTML + renderMealSlot(day[mealType], di, mealType);
+  attachSwipeListeners();
+}
+
+function attachSwipeListeners() {
+  document.querySelectorAll('.meal-proposal').forEach(card => {
+    if (card._swipe) return; card._swipe = true;
+    let sx = 0, sy = 0;
+    card.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+    card.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - sx;
+      const dy = e.touches[0].clientY - sy;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        card.style.transform = `translateX(${dx}px) rotate(${dx*0.05}deg)`;
+        const r = card.querySelector('.proposal-stamp.reject');
+        const a = card.querySelector('.proposal-stamp.accept');
+        if (r) r.style.opacity = dx < -20 ? Math.min(1, Math.abs(dx)/70) : '0';
+        if (a) a.style.opacity = dx >  20 ? Math.min(1, dx/70) : '0';
+      }
+    }, {passive:true});
+    card.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - sx;
+      const stack = card.closest('.tinder-stack');
+      if (!stack) return;
+      const di = parseInt(stack.dataset.di); const mealType = stack.dataset.meal;
+      if (dx < -65)      rejectProposal(di, mealType);
+      else if (dx > 65)  acceptProposal(di, mealType);
+      else {
+        card.style.transform = '';
+        card.querySelectorAll('.proposal-stamp').forEach(s => s.style.opacity = '0');
+      }
+    }, {passive:true});
+  });
+}
+
+function toggleShopping() {
+  const sl = document.getElementById("shoppingList");
+  if (!sl.classList.contains("visible")) { renderShopping(); sl.classList.add("visible"); }
+  else sl.classList.remove("visible");
+}
+function renderShopping() {
+  if (!currentMenu?.liste_courses) return;
+  const lc = currentMenu.liste_courses;
+  const cats = [
+    {label:"🥦 Légumes", items:lc.legumes||[]}, {label:"🍎 Fruits", items:lc.fruits||[]},
+    {label:"🥩 Protéines", items:lc.proteines||[]}, {label:"🌾 Féculents", items:lc.feculents||[]},
+    {label:"🏪 Épicerie", items:lc.epicerie||[]}
+  ];
+  const sl = document.getElementById("shoppingList"); sl.innerHTML = `<h3>🛒 Liste de courses</h3>`;
+  cats.forEach(cat => {
+    if (!cat.items.length) return;
+    const div = document.createElement("div"); div.className = "shopping-category";
+    div.innerHTML = `<div class="shopping-cat-title">${cat.label}</div><div class="shopping-items">${cat.items.map(i=>`<span class="shopping-item" onclick="this.classList.toggle('checked')">${i}</span>`).join('')}</div>`;
+    sl.appendChild(div);
+  });
+}
+
+function setLoading(v) { document.getElementById("loadingState").classList.toggle("visible", v); }
+function showError(msg) { const el = document.getElementById("errorState"); el.textContent = msg; el.classList.add("visible"); }
+function hideError() { document.getElementById("errorState").classList.remove("visible"); }
+function hideWeek() { document.getElementById("weekContainer").classList.remove("visible"); }
+
+init();
+</script>
+</body>
+</html>
